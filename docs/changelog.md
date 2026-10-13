@@ -4,6 +4,7 @@
 
 ## 변경 이력
 
+- **OpenAI 호환 Chat Completions / 2026-10-13** (버전 유지, [ADR 0012](adr/0012-openai-compatible-chat-completions.md)): #8 머지본 `196ad73`에서 `api/llm.py`로 모델 통신·JSON·인용 검증 분리. `OPENAI_BASE_URL`·`OPENAI_RESPONSE_FORMAT` 추가, 기존 키·모델 이름 유지. 키 없는 로컬 호환 서버 활성화와 health·답변 설정 판정 통일, 실패·잘림·위조 인용은 기존 발췌 경고로 전환. `.env.example`·Compose·README·공급자 계약 갱신. PR에 단위·PostgreSQL·프런트 빌드·Compose e2e 검증 워크플로 연결. 동국·Ollama 실접속은 미검증.
 - **추가 팀 피드백 반영 / 2026-10-13**: 중복된 `maritime_data` 코드 하위 폴더를 제거해 런타임을 `backend/tools/`, 사전 자료 준비를 `scripts/` 바로 아래로 이동했다. import·모듈 실행 명령·저장소 기준 기본 경로를 함께 수정했다. 명세는 `tools.md`(호출·조회·계산)와 `prepare-data.md`(사전 수집·전처리·적재)로 구분하고 관련 ADR·계획 파일명과 색인을 갱신했다. DB 스키마·API URL·응답 계약은 유지한다.
 
 - **역할4 피드백 반영 / 2026-10-13** (버전 유지, [ADR 0011 제안](adr/0011-tools-runtime-and-data-preparation.md)): 실행 Tool을 backend/tools, 준비·적재 스크립트를 최상위 scripts로 분리. 새 dbmate migration으로 해사 DDL을 통합하고 기존 public.ships와 명시적으로 연결한다. MRV·합성 Noon·출처·품질 모델과 API 계약은 유지한다. 기존 데이터 채택·비어 있지 않은 대상 재적재/rollback 거절, 앱 복구 시 연결 보존/해제 기록, 연결된 선박 식별정보 변경 보호를 추가했다.
@@ -29,6 +30,21 @@
 - **1.2.0 / 2026-09-30**: PDF/CSV, 다중 보고서, 통합 결과, 계정·권한·로그·백업·복구.
 
 ## 검증 기록
+
+### 2026-10-13 — Chat Completions 구현 (Windows)
+
+환경: #8 머지 커밋 `196ad73`, Python 3.13.16·uv 0.13.0·Node.js 24.21.0. 실행 도구는 프로젝트의 무시된 `.verification/`에 준비했고 backend 잠금 파일의 dev·data 의존성과 frontend `npm ci`를 설치했다. 개인 `.env`·DB·마이그레이션·패키지 잠금 파일은 수정하지 않았다.
+
+| 검증 | 실제 결과 |
+|---|---|
+| 모델 전용 pytest | 70 통과. 모의 HTTP로 OpenAI·사용자 지정 경로·키 없는 로컬 주소, JSON 옵션, 언어·인용·실패 전환·health와 실제 답변 오케스트레이션 검증 |
+| 전체 backend pytest (`--basetemp`는 프로젝트 내부 검증 폴더) | 147 통과, 실 PostgreSQL 연결·데이터셋이 필요한 58 건너뜀. Starlette TestClient/httpx 사용 중단 경고 1건 |
+| frontend `npm test` | 4 통과 |
+| frontend `npm run build` | Next.js 16.3.8 standalone 빌드 성공 |
+| 로컬 Docker Compose·e2e | Docker 실행 파일·데몬이 없어 실행하지 못함. PR 워크플로에 검증 연결 |
+| 실제 OpenAI·동국 AI Chat·Ollama 호출 | 수행하지 않음. 동국 웹 링크는 API 주소가 아니며 실제 API 정보·실행 모델 환경 미확보 |
+
+최초 모델 테스트의 메모리 DB 대역이 최신 advisory lock 질의를 처리하지 못해 실패했으며 대역을 보완한 뒤 70개가 통과했다. 전체 테스트는 샌드박스 임시 폴더 접근, 프런트 테스트는 자식 프로세스 실행 제한으로 실패한 뒤 승인된 실행으로 재검증했다. 이 환경 오류를 제품 코드 변경으로 우회하지 않았다.
 
 ### 2026-10-13 - PR #9 최종 점검
 

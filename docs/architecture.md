@@ -23,7 +23,7 @@ flowchart LR
     G --> D
     G --> K
   end
-  G -. 선택: OPENAI_API_KEY 설정 시 .-> O[(외부 LLM API)]
+  G -. 선택: OPENAI_BASE_URL · MODEL 설정 .-> O[(OpenAI 호환 Chat Completions)]
   E[e2e<br/>Playwright] -. profile e2e .-> N
 ```
 
@@ -99,6 +99,7 @@ sequenceDiagram
 | `api/routes/` | 경로 표와 도메인별 핸들러: `system`(health·tools), `auth`, `documents`(문서·PDF·ask·search·history), `operations`, `changes`, `reports`, `admin`(users·logs·backups) |
 | `api/store/` | `Workspace` = `base.Database`(연결·트랜잭션) + 도메인 mixin: `users`, `documents`(청크 900자·검색), `operations`, `changes`, `reports`, `answers`(통합 답변·선택적 LLM), `tools`, `backups` |
 | `api/config.py`, `api/deps.py` | 환경 설정(DB 주소, 백업 경로, 허용 호스트), `Workspace` 열기와 최초 1회 초기화 |
+| `api/llm.py` | Chat Completions 호출, 선택적 JSON 출력 형식, 모델 JSON·원문 인용 검증. 설정 판정은 `config.llm_settings()`를 health·답변이 공유 |
 | `api/errors.py`, `api/validation.py` | `ApiError`·`require`, 입력 검증·형식 도우미 |
 | `knowledge/seed.json`, `knowledge/sample-data.json` | 기본 문서, "예시 데이터 넣기"용 가상 운항 기록 |
 | `tools/` | 서비스 실행 중 사용하는 읽기 전용 해사 데이터 조회·계산·규칙 기반 조회 도우미(8절) |
@@ -121,7 +122,7 @@ DB 스키마는 backend가 아니라 최상위 `migrations/`(dbmate)가 소유�
 - **인증**: 관리자만 로그인(salt + scrypt, HttpOnly·SameSite=Strict 세션 쿠키, 12시간, 서버 메모리 보관 — backend 재시작 시 로그아웃). 일반 사용자는 무작위 `haedap_guest` 쿠키로 작업공간만 구분(인증 수단 아님).
 - **쓰기 보호**: 모든 POST는 JSON + `X-Haedap-Token` 필요. 원본 자료(문서·선박·운항) 변경은 서버에서 관리자 여부를 검사.
 - **열람 범위**: 문서 `scope`(all/operator/admin)를 **검색 단계부터** 적용하고, 원본 PDF·보고서 근거·질문 이력 재열람에도 다시 검사.
-- **LLM 출력 검증**: 외부 모델은 근거 청크 ID와 원문 인용 구절을 반환해야 하며, 인용이 원문에 없으면 폐기하고 원문 발췌로 되돌림.
+- **LLM 출력 검증**: OpenAI 호환 `<OPENAI_BASE_URL>/chat/completions`에 권한 적용된 근거만 전달. JSON 출력 형식 강제는 선택 사항이고 앱의 JSON·인용 검증은 항상 적용. 정상 완료(`finish_reason=stop`)·최대 5개 문장·근거 ID·8자 이상 원문 인용을 검증하며 하나라도 틀리면 전체 폐기 후 발췌로 전환. health는 같은 설정 판정만 사용하며 모델 서버를 호출하지 않음([ADR 0012](adr/0012-openai-compatible-chat-completions.md)).
 - **근거 없는 수치 금지**: 공식 CII와 규정 적용 판정은 산출하지 않고 `unavailable` / `unknown`과 사유를 반환.
 - **비밀값**: `.env`(최상위)는 Git에서 제외. API 키는 backend 환경변수로만 전달하고 frontend 컨테이너에는 넣지 않습니다.
 
@@ -130,7 +131,7 @@ DB 스키마는 backend가 아니라 최상위 `migrations/`(dbmate)가 소유�
 | 바꾸려는 것 | 시작 위치 | 지켜야 할 계약 |
 |---|---|---|
 | 검색(벡터·하이브리드 RAG) | `api/store/documents.py`의 `search`, `save_document`의 청크 분할 | 열람 범위 필터 유지, evidence 필드 형식 |
-| 답변 생성(LLM 공급자) | `api/store/answers.py`의 `grounded_statements`, `answer`의 `mode=llm` 분기 | statements의 `chunkId`·`quote` 인용 검증 |
+| 답변 생성(LLM 공급자) | `api/llm.py`, `api/config.py`, `api/store/answers.py`의 `mode=llm` 분기 | [공급자 계약](specs/llm-provider.md), statements의 `chunkId`·`quote` 인용 검증 |
 | 의도 분류·Agent | `api/store/answers.py`의 `answer` | [`specs/integrated-answer.md`](specs/integrated-answer.md) 출력 형식 |
 | 계산 Tool 추가 | `api/store/tools.py`(`TOOL_DEFINITIONS`, 계산 메서드), `api/routes/system.py`(경로) | 입력 검증, `version`·`assumptions` 반환, `tool_runs` 기록 |
 | 보고서 서식 | `api/store/reports.py`의 `generate_report` | 없는 값은 `[미입력 · 확인 필요]` |

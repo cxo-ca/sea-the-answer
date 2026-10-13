@@ -14,7 +14,7 @@
 
 일반 기능은 로그인 없이 쓰고, 등록·수정·삭제·승인·백업은 관리자(기본 **`admin / 1234`**, 실제 사용 전에 변경)만 할 수 있습니다.
 
-**현재 구현 범위**: 문서 검색은 질문 단어가 청크에 포함된 개수로 순위를 매기는 단순 키워드 검색이고, 답변은 기본적으로 원문 발췌입니다. 외부 LLM은 `.env`로 켜는 선택 기능입니다. 벡터·하이브리드 RAG, Local LLM, 공식 CII 계산, 규정 적용 자동 판정, DOCX·PPT 등록은 아직 연결 전입니다. 범위와 연결 계획은 [`docs/plans/2026-10-08-team-module-integration.md`](docs/plans/2026-10-08-team-module-integration.md)를 보세요.
+**현재 구현 범위**: 문서 검색은 질문 단어가 청크에 포함된 개수로 순위를 매기는 단순 키워드 검색이고, 답변은 기본적으로 원문 발췌입니다. 선택적 LLM은 OpenAI 호환 Chat Completions로 연결하며 주소·모델·키 설정으로 OpenAI·동국 AI Chat·로컬 Ollama를 전환할 수 있습니다. 공통 호출은 모의 HTTP로 검증했고, 동국의 실제 API 정보와 실제 Ollama 연결은 아직 미검증입니다. 벡터·하이브리드 RAG, 공식 CII 계산, 규정 적용 자동 판정, DOCX·PPT 등록은 아직 연결 전입니다. 범위와 연결 계획은 [`docs/plans/2026-10-08-team-module-integration.md`](docs/plans/2026-10-08-team-module-integration.md)를 보세요.
 
 ## 프로젝트 구조
 
@@ -148,9 +148,31 @@ Docker 없이 e2e를 돌리려면 **빈 DB로 띄운 스택**에 대고 `e2e/`�
 | `PORT` | `5173` | 화면 포트 |
 | `HAEDAP_BIND` | `127.0.0.1` | `0.0.0.0`이면 LAN·서버 접속 허용 |
 | `HAEDAP_ALLOWED_HOSTS` | (비움) | localhost 외에 접속에 쓰는 호스트 이름·IP(쉼표 구분) |
-| `OPENAI_API_KEY`, `OPENAI_MODEL` | (비움) | 둘 다 넣으면 근거 기반 모델 답변 선택 가능. backend에만 전달 |
+| `OPENAI_MODEL` | (비움) | 모델 서버의 정확한 모델 ID. 비우면 모델 답변 비활성 |
+| `OPENAI_API_KEY` | (비움) | 기본 OpenAI 서버에는 필수. 로컬 Ollama는 생략 가능. 값이 있을 때만 Bearer 인증 전송 |
+| `OPENAI_BASE_URL` | `https://api.openai.com/v1` | OpenAI 호환 API 접두 주소. `/chat/completions`는 앱에서 붙임. backend에만 전달 |
+| `OPENAI_RESPONSE_FORMAT` | `text` | 기본은 JSON 출력 지시와 앱 내부 검증. 지원 서버·모델에서 `json_object` 또는 `json_schema` 선택 |
 | `MARITIME_DATA_API_TOKEN`, `MARITIME_DATA_DATABASE_URL` | (비움) | 해사 데이터 Tool 라우트(`/api/maritime-data/*`) 활성화 |
 | `DATABASE_URL`, `HAEDAP_API_ORIGIN` | — | Docker 없이 실행할 때만 사용 (`DATABASE_URL`은 dbmate도 사용) |
+
+### 모델 서버 연결
+
+준비물은 실행 중인 OpenAI 호환 Chat Completions 서버와 그 서버의 모델 ID입니다. 루트 `.env`의 기존 DB 설정을 보존하고 모델 항목만 수정하세요. Docker Desktop에서 PC의 Ollama를 사용할 때 예시는 다음과 같습니다. 모델 자리표시는 `ollama list`에서 확인한 실제 설치 모델 ID로 바꿉니다.
+
+```dotenv
+OPENAI_BASE_URL=http://host.docker.internal:11434/v1
+OPENAI_MODEL=replace-with-installed-model-id
+OPENAI_API_KEY=
+OPENAI_RESPONSE_FORMAT=text
+```
+
+루트에서 `docker compose up -d --build backend frontend`로 코드와 환경변수를 반영합니다. 직접 실행하는 백엔드에서는 URL을 `http://127.0.0.1:11434/v1`로 바꾸고 재시작하세요. 컨테이너 안의 `localhost`는 컨테이너 자신입니다. 호스트의 Ollama 바인딩·방화벽 설정과 Linux 안내는 [공급자 계약](docs/specs/llm-provider.md#접속-위치별-기본-url)을 따릅니다.
+
+예상 결과: `/api/health`의 `llmConfigured`가 true가 되고 모델 답변 모드를 사용할 수 있습니다. 실제 성공은 근거가 있는 질문에서 `generation=llm`, 유효 인용, 모델 실패 경고 없음까지 확인해야 합니다. 실패·잘린 응답·위조 인용은 `MODEL_FAILED_EXTRACTIVE_FALLBACK`과 원문 발췌로 전환됩니다. 설정이 잘못되면 `MODEL_NOT_CONFIGURED`입니다. 동국은 공식 API 주소·모델·인증 정보를 사용하며 웹 채팅 주소(`/dashboard/chat`)를 API 주소로 넣지 않습니다.
+
+25초를 넘는 추론은 실패 전환되므로 로컬 모델을 미리 적재해 확인하세요. 기본 호환 요청은 공급자별 선택 필드를 생략하여 기존 2,200 출력 토큰 한도도 보내지 않습니다. 생성 한도는 모델 서버 설정에 따르며 앱은 최대 5개 답변 문장과 인용을 검증합니다. 상세 형식·제약은 [공급자 계약](docs/specs/llm-provider.md)에 있습니다.
+
+PR에는 [GitHub Actions 검증](.github/workflows/verify.yaml)이 연결됩니다. 백엔드 테스트(임시 PostgreSQL 포함), 프런트 단위 테스트·빌드, Compose 구성 검사·격리된 브라우저 e2e를 실행하며 실제 모델 키를 사용하지 않습니다. 수행 결과와 미검증 범위는 [변경 이력](docs/changelog.md)에 기록합니다.
 
 ## API
 
