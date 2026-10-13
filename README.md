@@ -172,7 +172,7 @@ OPENAI_RESPONSE_FORMAT=text
 
 25초를 넘는 추론은 실패 전환되므로 로컬 모델을 미리 적재해 확인하세요. 기본 호환 요청은 공급자별 선택 필드를 생략하여 기존 2,200 출력 토큰 한도도 보내지 않습니다. 생성 한도는 모델 서버 설정에 따르며 앱은 최대 5개 답변 문장과 인용을 검증합니다. 상세 형식·제약은 [공급자 계약](docs/specs/llm-provider.md)에 있습니다.
 
-PR에는 [GitHub Actions 검증](.github/workflows/verify.yaml)이 연결됩니다. 백엔드 테스트(임시 PostgreSQL 포함), 프런트 단위 테스트·빌드, Compose 구성 검사·격리된 브라우저 e2e를 실행하며 실제 모델 키를 사용하지 않습니다. 수행 결과와 미검증 범위는 [변경 이력](docs/changelog.md)에 기록합니다.
+push·PR에는 [GitHub Actions 검증](.github/workflows/verify.yaml)이 연결됩니다. 백엔드 테스트(임시 PostgreSQL 포함), 프런트 단위 테스트·빌드, Compose 구성 검사·격리된 브라우저 e2e를 실행하며 실제 모델 키를 사용하지 않습니다. 수행 결과와 미검증 범위는 [변경 이력](docs/changelog.md)에 기록합니다.
 
 ## API
 

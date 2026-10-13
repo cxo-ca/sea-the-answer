@@ -1,6 +1,7 @@
 name: Verify application
 
 on:
+  push:
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -9,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: verify-${{ github.ref }}
+  group: verify-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:

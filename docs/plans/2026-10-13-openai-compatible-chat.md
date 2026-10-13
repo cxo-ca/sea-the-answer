@@ -122,7 +122,7 @@ docker compose -p haedap-llm-check --profile e2e down
 - [x] README에 실제 사용 가능한 설정 예시·명령 반영.
 - [x] architecture·user-guide·integrated-answer의 모델 호출 설명·테스트 경로 갱신.
 - [x] 명세·계획·ADR 0012 색인과 변경 이력 갱신. 실제 모델 검증은 미검증 표시.
-- [ ] 작업 diff 검토 후 PR 준비. 팀원에게 댓글·메시지 전송이나 PR 머지는 별도 지시가 있을 때 수행한다.
+- [x] 작업 diff 검토 후 [PR #11](https://github.com/dudco/sea-the-answer/pull/11) 초안 제출. 원본 직접 푸시 권한이 없어 `cxo-ca/sea-the-answer` fork 사용. 팀원 메시지·댓글·PR 머지는 수행하지 않음.
 - 완료 조건: 실제 구현, 모의 검증, 공급자 실검증, 남은 한계가 구분된 결과를 제공한다.
 
 ## 4. 영향 받는 파일·문서
@@ -160,3 +160,4 @@ docker compose -p haedap-llm-check --profile e2e down
 - 2026-10-13: 변경 문서 8개의 로컬 링크 85개·JSON 예제 2개와 `git diff --check` 확인. 모의 테스트 코드를 실행한 검증이 아니라 준비 문서의 경로·예제 대조다.
 - 2026-10-13: 사용자가 동국 AI Chat 대시보드 링크를 제공. 페이지 본문·공식 API 안내를 확보하지 못해 웹 접속 주소와 모델 API 주소를 구분해 기록하고 미확정 항목·후속 확인 절차 갱신. 외부 모델 요청은 실행하지 않음.
 - 2026-10-13: #8 머지 확인·pull·작업 브랜치 생성. Chat Completions 공통 통신·설정 판정·인용 검증·Compose 전달 구현. 모의 70개와 전체 백엔드·프런트 검증 완료. 로컬 Docker 부재를 보완하는 PR 검증 워크플로 추가.
+- 2026-10-13: fork 브랜치를 푸시하고 PR #11 초안 생성. 원본 PR에서 Actions 실행이 관찰되지 않아 push 트리거도 추가해 본인 fork에서 동일 CI 검증 진행.
