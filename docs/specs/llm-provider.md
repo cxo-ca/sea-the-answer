@@ -146,7 +146,7 @@ Chat Completions의 텍스트는 `choices[0].message.content`에서 읽는다. J
 - [x] 정상 JSON·인용은 `generation=llm`, 없는 청크·위조 인용·짧은 인용·비정상 구조·잘림·거절은 발췌 전환한다.
 - [x] `insufficient=true`, 빈 근거, 발췌 모드에서 각각 정해진 동작과 요청 횟수를 확인한다.
 - [x] 네트워크 오류·타임아웃·HTTP 오류에서 기존 공개 경고 코드를 유지하고 키가 노출되지 않는다.
-- [ ] Compose가 새 설정을 backend에만 전달하며 기본 e2e에는 실제 모델 설정이 유입되지 않는다.
+- [x] Compose가 새 설정을 backend에만 전달하며 기본 e2e에는 실제 모델 설정이 유입되지 않는다. Linux CI의 운영·개발·e2e Compose 검사와 격리 e2e 통과.
 - [ ] 실제 동국 AI Chat에서 문서 질문 1건 이상이 `generation=llm`, 유효 인용, 모델 실패 경고 없음으로 확인된다.
 - [ ] 실제 로컬 Ollama에서도 위 기준을 확인하고, Docker 사용 시 컨테이너에서 호스트 모델에 도달함을 확인한다.
 

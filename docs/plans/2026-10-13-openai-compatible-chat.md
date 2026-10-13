@@ -1,6 +1,7 @@
 # OpenAI 호환 Chat Completions 전환
 
 - 상태: 진행 중
+- 구현·제출: 완료. 실제 동국 AI Chat·Ollama 연결 확인은 정보·환경 확보 후 후속 검증으로 남음.
 - 작성: 정호영 · Codex 지원 · 2026-10-13
 - 담당: 정호영
 - 목표 일자: 2026-10-14 (팀장 지시의 “내일까지”, 2026-10-13 기준)
@@ -84,8 +85,8 @@ docker compose version
 - [x] `backend/tests/test_llm_provider.py` 추가: `httpx.MockTransport`로 70개 검증. 실제 외부 요청과 DB 없이 실행.
 - [x] 실제 답변 오케스트레이션 + MemoryWorkspace로 `/api/health`·`/api/ask` 설정 판정·실패 전환 확인.
 - [x] 백엔드 전체 147 통과·실 DB 58 건너뜀, 프런트 4 통과·빌드 성공. 로컬 uv가 만든 Python 환경으로 pytest 실행.
-- [ ] 루트에서 운영·개발·e2e Compose 구문을 확인. 설정 출력에 키가 노출되지 않도록 `config -q` 사용.
-- [ ] 루트에서 별도 프로젝트 이름으로 e2e 실행. 14단계 업무 흐름 통과와 종료 코드 확인.
+- [x] Linux CI에서 운영·개발·e2e Compose 구문 확인. `config -q` 사용.
+- [x] Linux CI에서 별도 프로젝트 이름으로 Docker e2e 실행. 14단계 업무 흐름 1개 테스트 통과, 종료 코드 0과 정리 확인.
 - [ ] 외부 호출은 별도로 동국 AI Chat·로컬 Ollama에서 실제 모델 답변의 `generation=llm`과 유효 인용을 확인. 200 응답만으로 성공 처리하지 않는다.
 - 완료 조건: 모의 테스트와 실제 공급자 검증을 분리 기록하며, 미확보 환경·키 때문에 못 한 검증은 미검증으로 남긴다.
 
@@ -161,3 +162,4 @@ docker compose -p haedap-llm-check --profile e2e down
 - 2026-10-13: 사용자가 동국 AI Chat 대시보드 링크를 제공. 페이지 본문·공식 API 안내를 확보하지 못해 웹 접속 주소와 모델 API 주소를 구분해 기록하고 미확정 항목·후속 확인 절차 갱신. 외부 모델 요청은 실행하지 않음.
 - 2026-10-13: #8 머지 확인·pull·작업 브랜치 생성. Chat Completions 공통 통신·설정 판정·인용 검증·Compose 전달 구현. 모의 70개와 전체 백엔드·프런트 검증 완료. 로컬 Docker 부재를 보완하는 PR 검증 워크플로 추가.
 - 2026-10-13: fork 브랜치를 푸시하고 PR #11 초안 생성. 원본 PR에서 Actions 실행이 관찰되지 않아 push 트리거도 추가해 본인 fork에서 동일 CI 검증 진행.
+- 2026-10-13: [Linux CI](https://github.com/cxo-ca/sea-the-answer/actions/runs/38408707402) 성공: 백엔드 201 통과·실 데이터셋 4 건너뜀, 프런트 테스트·빌드, Compose 구성 3종, Docker e2e 14단계 흐름 1개 테스트·정리 통과. PR #11은 충돌 없이 병합 가능. 실제 공급자 호출 성공은 주장하지 않음.

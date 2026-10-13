@@ -44,6 +44,10 @@
 | 로컬 Docker Compose·e2e | Docker 실행 파일·데몬이 없어 실행하지 못함. PR 워크플로에 검증 연결 |
 | 실제 OpenAI·동국 AI Chat·Ollama 호출 | 수행하지 않음. 동국 웹 링크는 API 주소가 아니며 실제 API 정보·실행 모델 환경 미확보 |
 
+같은 날 Linux GitHub Actions에서 커밋 `7d7f956`의 [검증 실행](https://github.com/cxo-ca/sea-the-answer/actions/runs/38408707402)이 성공했다. 백엔드 201 통과·실 해사 데이터셋 4 건너뜀(임시 PostgreSQL 18로 로컬에서 건너뛴 통합 테스트 포함), 프런트 단위 테스트·빌드 성공, 운영·개발·e2e Compose 구문 검사 성공, Docker의 격리된 DB→dbmate→FastAPI→Next.js→브라우저 14단계 흐름 1개 테스트 통과·정리 성공. 실제 모델 키·주소는 e2e에 전달하지 않았으므로 실제 공급자 연결 검증은 여전히 미검증이다.
+
+제출: 원본 저장소 직접 푸시 권한이 없어 본인 fork의 `feature/openai-compatible-chat`에서 [PR #11](https://github.com/dudco/sea-the-answer/pull/11)을 제출했다. 원본 PR의 Actions는 실행이 관찰되지 않아 활성화된 fork의 동일 워크플로로 검증했다. 개인 Git 전역 설정·원본 main·PR 병합은 변경하지 않았다. 준비 문서는 stash `c1c56bd`에도 보존했다.
+
 최초 모델 테스트의 메모리 DB 대역이 최신 advisory lock 질의를 처리하지 못해 실패했으며 대역을 보완한 뒤 70개가 통과했다. 전체 테스트는 샌드박스 임시 폴더 접근, 프런트 테스트는 자식 프로세스 실행 제한으로 실패한 뒤 승인된 실행으로 재검증했다. 이 환경 오류를 제품 코드 변경으로 우회하지 않았다.
 
 ### 2026-10-13 - PR #9 최종 점검
