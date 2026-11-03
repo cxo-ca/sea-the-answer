@@ -1,0 +1,49 @@
+name: PR22 isolated validation
+on:
+  push:
+    branches: [codex/pr22-validation-20261103]
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: capstone_test
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: haedap_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U capstone_test -d haedap_test"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - run: pip install uv==0.13.7
+      - run: uv sync --project backend --frozen
+      - run: uv run pytest -q --junitxml=../backend-results.xml
+        working-directory: backend
+        env:
+          HAEDAP_TEST_DATABASE_URL: postgresql://capstone_test:isolated-test-only@localhost:5432/haedap_test
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+      - run: npm ci
+        working-directory: frontend
+      - run: npm test
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - run: docker compose -p haedap-pr22-validation --profile e2e config --quiet
+      - run: docker compose -p haedap-pr22-validation --profile e2e up --build --force-recreate --exit-code-from e2e e2e
+      - if: always()
+        run: docker compose -p haedap-pr22-validation --profile e2e down
